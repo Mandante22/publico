@@ -154,37 +154,36 @@ document.addEventListener('DOMContentLoaded', async function() {
             let html = '';
             let items = [];
 
-            for (let i = 0; i < (data?.length || 0); i += 3) {
-                items.push(data.slice(i, i + 3));
+            // ✅ MUDANÇA AQUI: 1 anúncio por slide
+            for (let i = 0; i < (data?.length || 0); i += 1) {
+                items.push(data.slice(i, i + 1));
             }
 
             items.forEach((grupo, index) => {
                 const activeClass = index === 0 ? 'active' : '';
-                html += `<div class="carousel-item ${activeClass}"><div class="row g-4">`;
+                html += `<div class="carousel-item ${activeClass}"><div class="container">`;
 
                 grupo.forEach(anuncio => {
                     const fotos = anuncio.fotos ? JSON.parse(anuncio.fotos) : [];
                     const fotoPrincipal = fotos[0] || anuncio.comprovante || 'https://via.placeholder.com/400x200?text=Sem+Foto';
 
                     html += `
-                        <div class="col-md-4">
-                            <div class="card">
-                                <img src="${fotoPrincipal}" 
-                                        alt="${anuncio.titulo}" 
-                                        class="card-img-top" 
-                                        style="height: 250px; object-fit: cover; width: 100%;" 
-                                        loading="lazy"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#modalVerMaisFotos"
-                                        onclick="abrirModalGaleria('${anuncio.id}')">
-                                <div class="card-body">
-                                    <h5 class="card-title">${anuncio.titulo}</h5>
-                                    <p class="card-text">${anuncio.localizacao}</p>
-                                    <p class="text-red fw-bold">${anuncio.preco.toLocaleString('pt-AO')} Kz/mês</p>
-                                    <a href="https://wa.me/${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-yellow w-100 text-black" target="_blank">
-                                        📱 WhatsApp
-                                    </a>
-                                </div>
+                        <div class="card">
+                            <img src="${fotoPrincipal}" 
+                                    alt="${anuncio.titulo}" 
+                                    class="card-img-top" 
+                                    style="height: 250px; object-fit: cover;" 
+                                    loading="lazy"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalVerMaisFotos"
+                                    onclick="abrirModalGaleria('${anuncio.id}')">
+                            <div class="card-body">
+                                <h5 class="card-title">${anuncio.titulo}</h5>
+                                <p class="card-text">${anuncio.localizacao}</p>
+                                <p class="text-red fw-bold">${anuncio.preco.toLocaleString('pt-AO')} Kz/mês</p>
+                                <a href="https://wa.me/${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-yellow w-100 text-black" target="_blank">
+                                    📱 WhatsApp
+                                </a>
                             </div>
                         </div>
                     `;
@@ -415,7 +414,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             if (comprovanteError) throw comprovanteError;
 
-            const { data: comprovanteUrlData } = supabaseClient.storage
+            const {  comprovanteUrlData } = supabaseClient.storage
                 .from('comprovantes')
                 .getPublicUrl(comprovantePath);
 
@@ -432,7 +431,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 if (fotoError) throw fotoError;
 
-                const { data: fotoUrlData } = supabaseClient.storage
+                const {  fotoUrlData } = supabaseClient.storage
                     .from('fotos')
                     .getPublicUrl(fotoPath);
 
@@ -458,7 +457,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             if (dbError) throw dbError;
 
-            alert('🎉 Anúncio enviado com sucesso! Seu anúncio será revisado em até 1h.');
+            alert('🎉 Anúncio enviado com sucesso! Seu anúncio será revisado em até 24h.');
             this.reset();
         } catch (error) {
             console.error("Erro ao salvar:", error);
@@ -472,16 +471,4 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Chamadas iniciais
     await carregarCarrossel();
     await carregarImoveisNoMapa();
-});
-// Impede que o carrossel force rolagem da página
-document.querySelectorAll('.carousel').forEach(carousel => {
-    carousel.addEventListener('slide.bs.carousel', function () {
-        const rect = carousel.getBoundingClientRect();
-        if (rect.top < 0 || rect.bottom > window.innerHeight) {
-            window.scrollTo({
-                top: window.scrollY,
-                behavior: 'smooth'
-            });
-        }
-    });
 });
