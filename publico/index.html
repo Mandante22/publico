@@ -27,7 +27,7 @@
             height: 250px;
             object-fit: cover;
             border-radius: 10px;
-            width: 100%; /* Garante que a imagem ocupe toda a largura */
+            width: 100%;
         }
         .price {
             color: #dc3545;
@@ -143,6 +143,30 @@
         .seta-tooltip a:hover {
             text-decoration: underline;
         }
+
+        /* Estilo do carrossel */
+        .carousel {
+            position: relative;
+            overflow: hidden;
+            height: 350px;
+            margin-bottom: 20px;
+        }
+        .carousel-inner {
+            display: flex;
+            transition: transform 0.5s ease;
+            height: 100%;
+        }
+        .carousel-item {
+            min-width: 100%;
+            flex-shrink: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .carousel-item > .container {
+            max-width: 400px;
+        }
     </style>
 </head>
 <body>
@@ -222,7 +246,7 @@
     <section class="py-5 bg-white">
         <div class="container">
             <h2 class="text-center mb-4">Hotéis e Casas em <span class="text-red">Destaque</span></h2>
-                <div id="carouselDestaque" class="carousel slide">
+            <div id="carouselDestaque" class="carousel slide">
                 <div class="carousel-inner" id="carouselInner">
                 </div>
                 <button class="carousel-control-prev" type="button" data-bs-target="#carouselDestaque" data-bs-slide="prev">
