@@ -143,61 +143,62 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
-    // =============== CARROSSEL DE DESTAQUE ===============
-    async function carregarCarrossel() {
-        const carouselInner = document.getElementById('carouselInner');
-        if (!carouselInner) return;
+async function carregarCarrossel() {
+    const carouselInner = document.getElementById('carouselInner');
+    if (!carouselInner) return;
 
-        try {
-            const data = await getAnuncios();
+    try {
+        const data = await getAnuncios();
 
-            let html = '';
-            let items = [];
+        let html = '';
+        let items = [];
 
-            // ✅ MUDANÇA AQUI: 1 anúncio por slide
-            for (let i = 0; i < (data?.length || 0); i += 1) {
-                items.push(data.slice(i, i + 1));
-            }
+        // Agrupa os anúncios em grupos de 4
+        for (let i = 0; i < (data?.length || 0); i += 4) {
+            items.push(data.slice(i, i + 4));
+        }
 
-            items.forEach((grupo, index) => {
-                const activeClass = index === 0 ? 'active' : '';
-                html += `<div class="carousel-item ${activeClass}"><div class="container">`;
+        items.forEach((grupo, index) => {
+            const activeClass = index === 0 ? 'active' : '';
+            html += `<div class="carousel-item ${activeClass}">`;
 
-                grupo.forEach(anuncio => {
-                    const fotos = anuncio.fotos ? JSON.parse(anuncio.fotos) : [];
-                    const fotoPrincipal = fotos[0] || anuncio.comprovante || 'https://via.placeholder.com/400x200?text=Sem+Foto';
-
-                    html += `
-                        <div class="card">
-                            <img src="${fotoPrincipal}" 
+            // Grid 2x2
+            html += `
+                <div class="row g-3">
+                    ${grupo.map(anuncio => `
+                        <div class="col-md-6 col-lg-6">
+                            <div class="card h-100 shadow-sm">
+                                <img src="${anuncio.fotoPrincipal || anuncio.comprovante || 'https://via.placeholder.com/400x200?text=Sem+Foto'}" 
                                     alt="${anuncio.titulo}" 
                                     class="card-img-top" 
-                                    style="height: 250px; object-fit: cover;" 
+                                    style="height: 200px; object-fit: cover;" 
                                     loading="lazy"
                                     data-bs-toggle="modal"
                                     data-bs-target="#modalVerMaisFotos"
                                     onclick="abrirModalGaleria('${anuncio.id}')">
-                            <div class="card-body">
-                                <h5 class="card-title">${anuncio.titulo}</h5>
-                                <p class="card-text">${anuncio.localizacao}</p>
-                                <p class="text-red fw-bold">${anuncio.preco.toLocaleString('pt-AO')} Kz/mês</p>
-                                <a href="https://wa.me/${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-yellow w-100 text-black" target="_blank">
-                                    📱 WhatsApp
-                                </a>
+                                <div class="card-body">
+                                    <h5 class="card-title">${anuncio.titulo}</h5>
+                                    <p class="card-text">${anuncio.localizacao}</p>
+                                    <p class="text-red fw-bold">${anuncio.preco.toLocaleString('pt-AO')} Kz/mês</p>
+                                    <a href="https://wa.me/${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-yellow w-100 text-black" target="_blank">
+                                        📱 WhatsApp
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                    `;
-                });
-                html += `</div></div>`;
-            });
-            carouselInner.innerHTML = html;
-            console.log('✅ Carrossel carregado com sucesso.');
-        } catch (error) {
-            console.error('❌ Erro ao carregar carrossel:', error);
-            alert('Erro ao carregar destaques. Tente recarregar a página.');
-        }
-    }
+                    `).join('')}
+                </div>
+            `;
+            html += `</div>`;
+        });
 
+        carouselInner.innerHTML = html;
+        console.log('✅ Carrossel carregado com sucesso.');
+    } catch (error) {
+        console.error('❌ Erro ao carregar carrossel:', error);
+        alert('Erro ao carregar destaques. Tente recarregar a página.');
+    }
+}
     // =============== MAPA INTERATIVO ===============
     async function carregarImoveisNoMapa() {
         try {
@@ -552,3 +553,4 @@ async function carregarCarrossel() {
         alert('Erro ao carregar destaques. Tente recarregar a página.');
     }
 }
+
