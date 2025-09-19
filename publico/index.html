@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="pt-AO">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Encontre ou anuncie casas em Angola sem intermediários. Rápido, seguro e 100% angolano.">
+    <title>Intermediário Online - Encontre sua casa sem intermediários</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+        .search-box {
+            max-width: 600px;
+            margin: 30px auto;
+        }
+        .carousel-item img {
+            height: 250px;
+            object-fit: cover;
+            border-radius: 10px;
+            width: 100%; /* Garante que a imagem ocupe toda a largura */
+        }
+        .price {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        #mapa-interativo {
+            height: 500px;
+            margin: 40px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .card {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .navbar-brand span { font-weight: bold; }
+        .text-red { color: #dc3545; }
+        .text-yellow { color: #ffc107; }
+        .btn-red { background-color: #dc3545; border-color: #dc3545; }
+        .btn-yellow { background-color: #ffc107; border-color: #ffc107; }
+        .icon-section .icon-box {
+            text-align: center;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+        .icon-section .icon-box i {
+            font-size: 3rem;
+            color: #764ba2;
+            margin-bottom: 15px;
+        }
+
+        /* Modal Galeria */
+        .modal-body .img-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        .modal-body .img-gallery img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .modal-body .img-gallery img:hover {
+            transform: scale(1.05);
+        }
+        .modal-body .main-img-container {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .modal-body .main-img-container img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        /* Estilos para a nova seção de pagamento */
+        .payment-option {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .payment-option:hover {
+            transform: translateY(-5px);
+        }
+        .payment-option i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #495057;
+        }
+        .payment-option h5 {
+            font-weight: bold;
+        }
+
+        /* Spinner no mapa */
+        #mapa-interativo .spinner-border {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+
+        /* Estilo do tooltip do mapa */
+        .seta-tooltip {
+            background: #dc3545;
+            color: white;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            max-width: 250px;
+        }
+        .seta-tooltip a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .seta-tooltip a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="index.html">
+                <span class="text-red">Intermediário</span><span class="text-yellow">Online</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link text-black" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link text-black" href="#buscar">Procurar Casa</a></li>
+                    <li class="nav-item"><a class="nav-link text-black" href="#mapa">Ver Mapa</a></li>
+                    <li class="nav-item"><a class="nav-link text-black" href="#contactos">Contactos</a></li>
+                    <li class="nav-item"><a class="nav-link btn btn-red text-white ms-2" href="#anunciar">Anuncie Agora</a></li>
+                    <li class="nav-item"><a class="nav-link text-black" href="admin.html">Admin</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="container">
+            <h1 class="display-5 fw-bold">Encontre ou anuncie sua casa <span class="text-red">sem intermediários</span></h1>
+            <p class="lead">Rápido, seguro e 100% angolano. Conectamos você diretamente com o dono da casa — sem taxas escondidas.</p>
+            <div class="search-box">
+                <div class="input-group">
+                    <input type="text" id="searchBairro" class="form-control form-control-lg" placeholder="Digite o bairro (ex: Maianga, Talatona, Viana)">
+                    <button class="btn btn-danger btn-lg" onclick="buscarAnuncios()">Buscar</button>
+                </div>
+            </div>
+            <a href="#anunciar" class="btn btn-yellow text-black btn-lg mt-3">Anuncie Sua Casa</a>
+        </div>
+    </section>
+
+    <section class="py-5 bg-white icon-section">
+        <div class="container">
+            <h2 class="text-center mb-4">O que vai encontrar neste site?</h2>
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-4">
+                    <div class="icon-box">
+                        <i class="fas fa-home"></i>
+                        <h5>Casas e Hotéis</h5>
+                        <p>Variedade de imóveis para aluguel ou venda.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="icon-box">
+                        <i class="fas fa-key"></i>
+                        <h5>Mais de 100 Anúncios</h5>
+                        <p>Grande seleção de imóveis por toda Angola.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="icon-box">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <h5>Preço Justo</h5>
+                        <p>Negocie diretamente com o dono, sem taxas de agência.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="listaResultados" class="py-5 bg-white d-none">
+        <div class="container">
+            <h3 class="text-center mb-4">Resultados para: <span id="termoBusca"></span></h3>
+            <div class="row" id="listaAnuncios">
+            </div>
+        </div>
+    </section>
+
+    <section class="py-5 bg-white">
+        <div class="container">
+            <h2 class="text-center mb-4">Hotéis e Casas em <span class="text-red">Destaque</span></h2>
+                <div id="carouselDestaque" class="carousel slide">
+                <div class="carousel-inner" id="carouselInner">
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#carouselDestaque" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carouselDestaque" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section id="mapa" class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center text-red mb-4">📍 Mapa de Anúncios</h2>
+            <h2 class="text-center mb-4">Hotéis disponíveis por região <span class="text-red">➤ Veja onde há mais opções!</span></h2>
+            <div class="text-center mb-4">
+                <small>Os <span class="text-yellow fw-bold">CÍRCULOS AMARELOS</span> indicam zonas com alta disponibilidade.</small>
+            </div>
+            <div id="mapa-interativo">
+                <!-- Spinner será adicionado via JS -->
+            </div>
+        </div>
+    </section>
+
+    <section id="pagamento" class="py-5 bg-white">
+        <div class="container">
+            <h2 class="text-center text-red mb-4">Pague a Taxa de Anúncio Aqui</h2>
+            <p class="text-center text-muted mb-5">
+                Faça o pagamento da sua taxa de anúncio em uma das contas abaixo e anexe o comprovante no formulário de anúncio.
+            </p>
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-5">
+                    <div class="payment-option shadow-sm">
+                        <i class="fas fa-wallet"></i>
+                        <h5>Unitel Money</h5>
+                        <p class="mb-1"><strong>Conta:</strong> 931891432</p>
+                        <p class="mb-0"><strong>Nome:</strong> Intermediário Online</p>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="payment-option shadow-sm">
+                        <i class="fas fa-credit-card"></i>
+                        <h5>Multicaixa Express</h5>
+                        <p class="mb-1"><strong>Conta:</strong> 931891432</p>
+                        <p class="mb-0"><strong>Nome:</strong> Intermediário Online</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="anunciar" class="py-5 bg-white">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card p-4 shadow-sm">
+                        <h2 class="text-center text-red mb-4 fs-5">Seu imóvel merece ser visto! Não perca tempo! Destaque seu anúncio, garanta o contacto direto via WhatsApp e apareça no topo da lista. Invista uma pequena taxa e alcance milhares de interessados, garantindo um arrendamento rápido e o retorno do seu investimento.</h2>
+                        
+                        <div class="row justify-content-center mb-5">
+                            <div class="col-md-10">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered text-center">
+                                        <thead class="bg-red text-white">
+                                            <tr>
+                                                <th>Valor do Arrendamento</th>
+                                                <th>Seu Investimento</th>
+                                                <th>O Que Você Ganha</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Até 50.000 Kz/mês</td>
+                                                <td class="fw-bold text-red">5.000 Kz</td>
+                                                <td>✅ Anúncio destacado + WhatsApp direto + Mapa</td>
+                                            </tr>
+                                            <tr>
+                                                <td>50.001 a 100.000 Kz/mês</td>
+                                                <td class="fw-bold text-red">8.000 Kz</td>
+                                                <td>✅ Tudo acima + Badge "Popular" + Push notificações</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Acima de 100.000 Kz/mês</td>
+                                                <td class="fw-bold text-red">10.000 Kz</td>
+                                                <td>✅ Tudo acima + Badge "Premium" + Topo da lista</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="formularioAnuncio">
+                            <h5 class="card-title text-center text-red mb-3">Preencha os dados do seu imóvel</h5>
+                            
+                            <div class="mb-3">
+                                <label for="titulo" class="form-label">Título do Anúncio</label>
+                                <input type="text" class="form-control" id="titulo" placeholder="Ex: Apartamento T2 com vista para o mar" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="descricao" class="form-label">Descrição</label>
+                                <textarea class="form-control" id="descricao" rows="4" placeholder="Detalhes do imóvel, características, etc." required></textarea>
+                            </div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="localizacao" class="form-label">Localização (Bairro/Município)</label>
+                                    <input type="text" class="form-control" id="localizacao" placeholder="Ex: Luanda" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="preco" class="form-label">Preço (em Kz)</label>
+                                    <input type="number" class="form-control" id="preco" required>
+                                </div>
+                            </div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="contacto" class="form-label">Seu Contacto WhatsApp</label>
+                                    <input type="tel" class="form-control" id="contacto" placeholder="Ex: 923123456" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5 class="fw-bold text-red">Escolha a forma de pagamento:</h5>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="pagamento" id="transferencia" value="transferencia" required>
+                                        <label class="form-check-label" for="transferencia">
+                                            💸 Transferência Bancária<br>
+                                            <small class="text-muted">IBAN: 0040 0000 6041173810117</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="pagamento" id="unitel" value="unitel">
+                                        <label class="form-check-label" for="unitel">
+                                            📱 Unitel Money<br>
+                                            <small class="text-muted">Número: 931 891 432</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="fotoPrincipal" class="form-label">Foto Principal do Imóvel</label>
+                                <input type="file" class="form-control" id="fotoPrincipal" accept="image/*" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="fotosAdicionais" class="form-label">Fotos Adicionais (opcional - até 5 fotos)</label>
+                                <input type="file" class="form-control" id="fotosAdicionais" accept="image/*" multiple>
+                                <small class="text-muted">Selecione até 5 fotos adicionais do imóvel.</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="comprovante" class="form-label">Comprovante de Pagamento (envie aqui)</label>
+                                <input type="file" class="form-control" id="comprovante" accept="image/*" required>
+                            </div>
+                            
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-red btn-lg">Enviar Anúncio</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="modal fade" id="modalVerMaisFotos" tabindex="-1" aria-labelledby="modalVerMaisFotosLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalVerMaisFotosLabel">Galeria de Fotos</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="main-img-container">
+                        <img id="modalFotoPrincipal" src="" alt="Foto Principal" class="img-fluid rounded">
+                    </div>
+                    <div class="img-gallery" id="modalGaleria">
+                    </div>
+                    <h4 class="mt-4" id="modalTitulo"></h4>
+                    <p class="text-muted" id="modalPreco"></p>
+                    <p id="modalLocalizacao"></p>
+                    <p id="modalDescricao"></p>
+                    <a id="modalWhatsapp" href="#" class="btn btn-success mt-3 w-100" target="_blank">
+                        📞 Contactar pelo WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-4">Dicas de <span class="text-red">Segurança & Confiança</span></h2>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="p-3 border rounded text-center">
+                        <h5 class="text-red">✅ Nunca pague sem ver</h5>
+                        <p class="text-muted">Desconfie de quem pede sinal sem visita. Veja o imóvel pessoalmente.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 border rounded text-center">
+                        <h5 class="text-red">📄 Use contrato</h5>
+                        <p><a href="#" class="text-red" onclick="downloadContrato(); return false;">Baixe nosso modelo grátis</a> de contrato.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 border rounded text-center">
+                        <h5 class="text-red">⚠️ Denuncie fraudes</h5>
+                        <p>Encontrou anúncio falso? <a href="#" class="text-red">Clique aqui para denunciar</a>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer id="contactos" class="bg-black text-yellow text-center py-4">
+        <div class="container">
+            <h4 class="text-white mb-3">Contactos</h4>
+            <p><strong>Telefone:</strong> +244 931 891 432</p>
+            <p><strong>Email:</strong> intermediarioonline@gmail.com</p>
+            <p><strong>Morada:</strong> Vila de Viana, Viana, Luanda, Angola</p>
+            <hr class="text-muted">
+            <p class="mb-0">© 2024 Intermediário Online. Todos os direitos reservados.</p>
+            <p class="mb-0">Feito com 🧡 em Angola</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+</body>
+</html>
