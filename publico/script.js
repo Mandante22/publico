@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     window.buscarAnuncios = async function() {
         const termo = document.getElementById('searchBairro').value.trim().toLowerCase();
         if (!termo) {
-            alert('Digite um bairro para buscar!');
+            alert('Digite um bairro ou palavra-chave para buscar!');
             return;
         }
 
@@ -90,37 +90,66 @@ document.addEventListener('DOMContentLoaded', async function() {
                 .from('anuncios')
                 .select('*')
                 .eq('status', 'ativo')
-                .ilike('localizacao', `%${termo}%`);
+                .or(`localizacao.ilike.%${termo}%,descricao.ilike.%${termo}%`);
 
             if (error) throw error;
 
             listaAnuncios.innerHTML = '';
 
             if (!data || data.length === 0) {
-                listaAnuncios.innerHTML = '<div class="col-12"><div class="alert alert-info">Nenhum anúncio encontrado para este bairro.</div></div>';
+                listaAnuncios.innerHTML = '<div class="col-12"><div class="alert alert-info">Nenhum anúncio encontrado para esta busca.</div></div>';
                 return;
             }
+
+            // Obter top 3 visualizados hoje
+            const top3Ids = getTop3Visualizados();
 
             let html = '';
             data.forEach(anuncio => {
                 const fotos = anuncio.fotos ? JSON.parse(anuncio.fotos) : [];
                 const fotoPrincipal = fotos[0] || anuncio.comprovante || 'https://via.placeholder.com/400x200?text=Sem+Foto';
 
+                // Verificar se é novo (menos de 24h)
+                const publicacao = new Date(anuncio.dataCriacao);
+                const agora = new Date();
+                const diffHoras = Math.floor((agora - publicacao) / (1000 * 60 * 60));
+                let novoBadge = '';
+                if (diffHoras <= 24) {
+                    novoBadge = '<span class="badge bg-danger text-white ms-2">🆕 Novo!</span>';
+                }
+
+                // Verificar se é top visualizado
+                let topBadge = '';
+                if (top3Ids.includes(anuncio.id)) {
+                    topBadge = '<span class="badge bg-warning text-dark position-absolute top-0 start-0 m-2">🔥 Mais Procurado!</span>';
+                }
+
+                // Formatar tempo de publicação
+                const tempoPublicacao = formatarTempoPublicacao(anuncio.dataCriacao);
+
                 html += `
                     <div class="col-md-4 mb-4">
-                        <div class="card h-100 shadow-sm">
+                        <div class="card h-100 shadow-sm position-relative">
+                            ${topBadge}
                             <img src="${fotoPrincipal}" alt="${anuncio.titulo}" class="card-img-top" style="height: 200px; object-fit: cover;">
                             <div class="card-body">
-                                <h5 class="card-title">${anuncio.titulo}</h5>
+                                <h5 class="card-title">${anuncio.titulo} ${novoBadge}</h5>
                                 <p class="card-text">${anuncio.descricao.substring(0, 100)}...</p>
                                 <p class="text-red fw-bold">${anuncio.preco.toLocaleString('pt-AO')} Kz/mês</p>
                                 <p class="text-muted">📍 ${anuncio.localizacao}</p>
+                                <p class="text-muted small"><i class="far fa-clock"></i> ${tempoPublicacao}</p>
                                 <button class="btn btn-outline-danger w-100 mb-2 abrir-chat" data-dono="Proprietário" data-whatsapp="${anuncio.contacto}">
                                     💬 Contactar
                                 </button>
-                                <a href="https://wa.me/${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-whatsapp w-100" target="_blank">
+                                <a href="https://wa.me/${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-whatsapp w-100 mb-2" target="_blank">
                                     📱 WhatsApp
                                 </a>
+                                <a href="tel:+244${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-outline-dark w-100" target="_blank">
+                                    <i class="fas fa-phone"></i> Ligar agora
+                                </a>
+                                <button class="btn btn-outline-secondary w-100 mt-2" onclick="compartilharAnuncio('${anuncio.id}', '${anuncio.titulo}')">
+                                    <i class="fas fa-share-alt"></i> Compartilhar
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -143,6 +172,184 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
+    // =============== FILTRO POR PREÇO ===============
+    window.filtrarPorPreco = async function(faixa) {
+        let precoMin, precoMax;
+        switch(faixa) {
+            case 'ate50': precoMin = 0; precoMax = 50000; break;
+            case '50a100': precoMin = 50001; precoMax = 100000; break;
+            case 'acima100': precoMin = 100001; precoMax = 999999999; break;
+        }
+
+        const { data, error } = await supabaseClient
+            .from('anuncios')
+            .select('*')
+            .eq('status', 'ativo')
+            .gte('preco', precoMin)
+            .lte('preco', precoMax);
+
+        if (error) {
+            alert('Erro ao filtrar por preço.');
+            return;
+        }
+
+        exibirResultadosFiltrados(data, `Filtrado por preço: ${faixa}`);
+    };
+
+    window.limparFiltroPreco = function() {
+        document.getElementById('searchBairro').value = '';
+        buscarAnuncios();
+    };
+
+    // Função auxiliar para exibir resultados (reutilizável)
+    function exibirResultadosFiltrados(data, termo = 'Resultados') {
+        const listaAnuncios = document.getElementById('listaAnuncios');
+        const listaResultados = document.getElementById('listaResultados');
+        const termoBuscaSpan = document.getElementById('termoBusca');
+
+        listaResultados.classList.remove('d-none');
+        termoBuscaSpan.textContent = termo;
+
+        if (!data || data.length === 0) {
+            listaAnuncios.innerHTML = '<div class="col-12"><div class="alert alert-info">Nenhum anúncio encontrado com este filtro.</div></div>';
+            return;
+        }
+
+        // Obter top 3 visualizados hoje
+        const top3Ids = getTop3Visualizados();
+
+        let html = '';
+        data.forEach(anuncio => {
+            const fotos = anuncio.fotos ? JSON.parse(anuncio.fotos) : [];
+            const fotoPrincipal = fotos[0] || anuncio.comprovante || 'https://via.placeholder.com/400x200?text=Sem+Foto';
+
+            // Verificar se é novo (menos de 24h)
+            const publicacao = new Date(anuncio.dataCriacao);
+            const agora = new Date();
+            const diffHoras = Math.floor((agora - publicacao) / (1000 * 60 * 60));
+            let novoBadge = '';
+            if (diffHoras <= 24) {
+                novoBadge = '<span class="badge bg-danger text-white ms-2">🆕 Novo!</span>';
+            }
+
+            // Verificar se é top visualizado
+            let topBadge = '';
+            if (top3Ids.includes(anuncio.id)) {
+                topBadge = '<span class="badge bg-warning text-dark position-absolute top-0 start-0 m-2">🔥 Mais Procurado!</span>';
+            }
+
+            // Formatar tempo de publicação
+            const tempoPublicacao = formatarTempoPublicacao(anuncio.dataCriacao);
+
+            html += `
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm position-relative">
+                        ${topBadge}
+                        <img src="${fotoPrincipal}" alt="${anuncio.titulo}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title">${anuncio.titulo} ${novoBadge}</h5>
+                            <p class="card-text">${anuncio.descricao.substring(0, 100)}...</p>
+                            <p class="text-red fw-bold">${anuncio.preco.toLocaleString('pt-AO')} Kz/mês</p>
+                            <p class="text-muted">📍 ${anuncio.localizacao}</p>
+                            <p class="text-muted small"><i class="far fa-clock"></i> ${tempoPublicacao}</p>
+                            <button class="btn btn-outline-danger w-100 mb-2 abrir-chat" data-dono="Proprietário" data-whatsapp="${anuncio.contacto}">
+                                💬 Contactar
+                            </button>
+                            <a href="https://wa.me/${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-whatsapp w-100 mb-2" target="_blank">
+                                📱 WhatsApp
+                            </a>
+                            <a href="tel:+244${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-outline-dark w-100" target="_blank">
+                                <i class="fas fa-phone"></i> Ligar agora
+                            </a>
+                            <button class="btn btn-outline-secondary w-100 mt-2" onclick="compartilharAnuncio('${anuncio.id}', '${anuncio.titulo}')">
+                                <i class="fas fa-share-alt"></i> Compartilhar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        listaAnuncios.innerHTML = html;
+        listaResultados.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // =============== FUNÇÕES AUXILIARES ===============
+    function formatarTempoPublicacao(dataCriacao) {
+        const agora = new Date();
+        const publicacao = new Date(dataCriacao);
+        const diffMs = agora - publicacao;
+        const diffHoras = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDias = Math.floor(diffHoras / 24);
+
+        if (diffHoras < 1) return 'Publicado há instantes';
+        if (diffHoras < 24) return `Publicado há ${diffHoras} hora${diffHoras !== 1 ? 's' : ''}`;
+        if (diffDias === 1) return 'Publicado ontem';
+        if (diffDias < 7) return `Publicado há ${diffDias} dias`;
+        return `Publicado em ${publicacao.toLocaleDateString('pt-AO')}`;
+    }
+
+    function registrarVisualizacao(id) {
+        const hoje = new Date().toISOString().split('T')[0]; // "2025-04-05"
+        const chave = `visualizacoes_${hoje}`;
+        let visualizacoes = JSON.parse(localStorage.getItem(chave) || '{}');
+        visualizacoes[id] = (visualizacoes[id] || 0) + 1;
+        localStorage.setItem(chave, JSON.stringify(visualizacoes));
+    }
+
+    function getTop3Visualizados() {
+        const hoje = new Date().toISOString().split('T')[0];
+        const visualizacoes = JSON.parse(localStorage.getItem(`visualizacoes_${hoje}`) || '{}');
+        return Object.entries(visualizacoes)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([id]) => id);
+    }
+
+    window.compartilharAnuncio = function(id, titulo) {
+        const url = `${window.location.origin}${window.location.pathname}#anuncio-${id}`;
+        const texto = `Olha este imóvel: ${titulo} - Encontrei no Intermediário Online! ${url}`;
+
+        if (navigator.share) {
+            navigator.share({
+                title: 'Intermediário Online',
+                text: texto,
+                url: url
+            }).catch(console.error);
+        } else {
+            // Fallback: copiar link
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Link copiado! Cole no WhatsApp, Facebook ou onde quiser.');
+            }).catch(err => {
+                alert('Erro ao copiar link: ' + err);
+            });
+        }
+    };
+
+    window.compartilharAnuncioModal = function() {
+        const titulo = document.getElementById('modalTitulo').textContent;
+        const id = document.querySelector('#modalVerMaisFotos').dataset.anuncioId;
+        compartilharAnuncio(id, titulo);
+    };
+
+    // =============== CONTADOR DE ANÚNCIOS ===============
+    async function atualizarContadorAnuncios() {
+        const { count, error } = await supabaseClient
+            .from('anuncios')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'ativo');
+
+        if (error) {
+            console.error('Erro ao contar anúncios:', error);
+            return;
+        }
+
+        const contadorElement = document.getElementById('contadorAnuncios');
+        if (contadorElement) {
+            contadorElement.innerHTML = `✅ <strong>${count.toLocaleString('pt-AO')}</strong> imóveis anunciados em Angola!`;
+        }
+    }
+
     // =============== NOVO CARROSSEL EM GRID 2x2 COM PLACEHOLDERS ===============
     let currentCarouselIndex = 0;
     let carouselInterval;
@@ -157,6 +364,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 carouselContainer.innerHTML = '<p class="text-center text-muted">Nenhum anúncio disponível no momento.</p>';
                 return;
             }
+
+            // Obter top 3 visualizados hoje
+            const top3Ids = getTop3Visualizados();
 
             // Agrupa os anúncios em grupos de 4
             const groups = [];
@@ -178,29 +388,75 @@ document.addEventListener('DOMContentLoaded', async function() {
                 // Adiciona os cards reais
                 group.forEach(anuncio => {
                     const fotos = anuncio.fotos ? JSON.parse(anuncio.fotos) : [];
-                    const fotoPrincipal = fotos[0] || anuncio.comprovante || 'https://via.placeholder.com/400x200?text=Sem+Foto';
+                    const todasFotos = [anuncio.fotoPrincipal, ...(fotos || [])].filter(f => f);
+                    const fotoPrincipal = todasFotos[0] || 'https://via.placeholder.com/400x200?text=Sem+Foto';
 
-                    const cardHtml = `
-                        <div class="card h-100">
-                            <img src="${fotoPrincipal}" 
-                                 alt="${anuncio.titulo}" 
-                                 class="card-img-top" 
-                                 style="height: 200px; object-fit: cover;"
-                                 loading="lazy"
-                                 data-bs-toggle="modal"
-                                 data-bs-target="#modalVerMaisFotos"
-                                 onclick="abrirModalGaleria('${anuncio.id}')">
-                            <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">${anuncio.titulo}</h5>
-                                <p class="card-text flex-grow-1">${anuncio.localizacao}</p>
-                                <p class="text-red fw-bold">${anuncio.preco.toLocaleString('pt-AO')} Kz/mês</p>
-                                <a href="https://wa.me/${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-whatsapp w-100" target="_blank">
-                                    📱 WhatsApp
-                                </a>
+                    // Verificar se é novo (menos de 24h)
+                    const publicacao = new Date(anuncio.dataCriacao);
+                    const agora = new Date();
+                    const diffHoras = Math.floor((agora - publicacao) / (1000 * 60 * 60));
+                    let novoBadge = '';
+                    if (diffHoras <= 24) {
+                        novoBadge = '<span class="badge bg-danger text-white ms-2">🆕 Novo!</span>';
+                    }
+
+                    // Verificar se é top visualizado
+                    let topBadge = '';
+                    if (top3Ids.includes(anuncio.id)) {
+                        topBadge = '<span class="badge bg-warning text-dark position-absolute top-0 start-0 m-2">🔥 Mais Procurado!</span>';
+                    }
+
+                    // Formatar tempo de publicação
+                    const tempoPublicacao = formatarTempoPublicacao(anuncio.dataCriacao);
+
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'card h-100';
+                    cardDiv.innerHTML = `
+                        <div class="position-relative">
+                            ${topBadge}
+                            <div class="rotating-image-container" style="height: 200px; overflow: hidden; position: relative;">
+                                <img src="${fotoPrincipal}" 
+                                     alt="${anuncio.titulo}" 
+                                     class="card-img-top rotating-image" 
+                                     style="height: 200px; object-fit: cover; width: 100%; transition: opacity 0.5s;"
+                                     loading="lazy"
+                                     data-bs-toggle="modal"
+                                     data-bs-target="#modalVerMaisFotos"
+                                     onclick="abrirModalGaleria('${anuncio.id}')">
                             </div>
                         </div>
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">${anuncio.titulo} ${novoBadge}</h5>
+                            <p class="card-text flex-grow-1">${anuncio.localizacao}</p>
+                            <p class="text-red fw-bold">${anuncio.preco.toLocaleString('pt-AO')} Kz/mês</p>
+                            <p class="text-muted small"><i class="far fa-clock"></i> ${tempoPublicacao}</p>
+                            <a href="https://wa.me/${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-whatsapp w-100 mb-2" target="_blank">
+                                📱 WhatsApp
+                            </a>
+                            <a href="tel:+244${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-outline-dark w-100" target="_blank">
+                                <i class="fas fa-phone"></i> Ligar agora
+                            </a>
+                            <button class="btn btn-outline-secondary w-100 mt-2" onclick="compartilharAnuncio('${anuncio.id}', '${anuncio.titulo}')">
+                                <i class="fas fa-share-alt"></i> Compartilhar
+                            </button>
+                        </div>
                     `;
-                    groupDiv.innerHTML += cardHtml;
+
+                    // Se tiver mais de 1 foto, inicia rotação
+                    if (todasFotos.length > 1) {
+                        const imgElement = cardDiv.querySelector('.rotating-image');
+                        let fotoIndex = 0;
+                        setInterval(() => {
+                            fotoIndex = (fotoIndex + 1) % todasFotos.length;
+                            imgElement.style.opacity = '0';
+                            setTimeout(() => {
+                                imgElement.src = todasFotos[fotoIndex];
+                                imgElement.style.opacity = '1';
+                            }, 500);
+                        }, 3000);
+                    }
+
+                    groupDiv.appendChild(cardDiv);
                 });
 
                 // PREENCHE ESPAÇOS VAZIOS se o grupo tiver menos de 4 itens
@@ -373,7 +629,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // =============== ABRIR MODAL DE GALERIA ===============
     window.abrirModalGaleria = async function(anuncioId) {
-        const {  anuncio, error } = await supabaseClient
+        const { data: anuncio, error } = await supabaseClient
             .from('anuncios')
             .select('*')
             .eq('id', anuncioId)
@@ -384,12 +640,19 @@ document.addEventListener('DOMContentLoaded', async function() {
             return;
         }
 
+        // Registrar visualização
+        registrarVisualizacao(anuncioId);
+
         document.getElementById('modalFotoPrincipal').src = anuncio.fotoPrincipal;
         document.getElementById('modalTitulo').textContent = anuncio.titulo;
         document.getElementById('modalPreco').textContent = `${anuncio.preco.toLocaleString('pt-AO')} Kz/mês`;
         document.getElementById('modalLocalizacao').textContent = anuncio.localizacao;
         document.getElementById('modalDescricao').textContent = anuncio.descricao;
         document.getElementById('modalWhatsapp').href = `https://wa.me/${anuncio.contacto.replace(/\D/g, '')}`;
+        document.getElementById('modalLigar').href = `tel:+244${anuncio.contacto.replace(/\D/g, '')}`;
+        
+        // Armazenar ID no modal para compartilhamento
+        document.querySelector('#modalVerMaisFotos').dataset.anuncioId = anuncioId;
 
         const galeria = document.getElementById('modalGaleria');
         galeria.innerHTML = '';
@@ -505,7 +768,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 fotosUrls.push(fotoUrlData.publicUrl);
             }
 
-            // Salva no banco
+            // ✅ INSERIR NOVO ANÚNCIO (não atualizar)
             const { error: dbError } = await supabaseClient
                 .from('anuncios')
                 .insert({
@@ -515,8 +778,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     preco,
                     contacto,
                     pagamento,
-                    status: 'pendente',
-                    dataCriacao: new Date().toISOString(),
+                    status: 'pendente', // Novo anúncio começa como pendente
                     comprovante: comprovanteUrlData.publicUrl,
                     fotoPrincipal: fotoPrincipalUrlData.publicUrl,
                     fotos: fotosUrls.length > 0 ? JSON.stringify(fotosUrls) : null,
@@ -536,8 +798,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
     // Chamadas iniciais
-    await carregarCarrosselGrid(); // <<< CHAMADA DO NOVO CARROSSEL
+    await atualizarContadorAnuncios();
+    await carregarCarrosselGrid();
     await carregarImoveisNoMapa();
 
 });
-
