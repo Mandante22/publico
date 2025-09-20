@@ -1,100 +1,132 @@
-/* CORES OFICIAIS: Vermelho (#CC0000), Preto (#000000), Amarelo (#FFCC00) */
-
+/* ========== CORES OFICIAIS ========== */
 :root {
-    --vermelho: #CC0000;
-    --preto: #000000;
-    --amarelo: #FFCC00;
+    --vermelho: #CC0000;     /* Vermelho forte e oficial */
+    --preto: #000000;        /* Preto puro */
+    --amarelo: #FFCC00;      /* Amarelo vibrante */
+    --cinza-claro: #f8f9fa;  /* Fundo claro suave */
+    --cinza-texto: #495057;  /* Texto secundário */
 }
 
-.text-red { color: var(--vermelho); }
-.text-yellow { color: var(--amarelo); }
-.text-black { color: var(--preto); }
-.bg-red { background-color: var(--vermelho); }
-.bg-yellow { background-color: var(--amarelo); }
+/* ========== TEXTOS ========== */
+.text-red { color: var(--vermelho) !important; }
+.text-yellow { color: var(--amarelo) !important; }
+.text-black { color: var(--preto) !important; }
 
+/* ========== BACKGROUNDS ========== */
+.bg-red { background-color: var(--vermelho) !important; }
+.bg-yellow { background-color: var(--amarelo) !important; }
+.bg-black { background-color: var(--preto) !important; }
+
+/* ========== BOTÕES ========== */
 .btn-red {
-    background-color: var(--vermelho);
-    border-color: var(--vermelho);
-    color: white;
+    background-color: var(--vermelho) !important;
+    border-color: var(--vermelho) !important;
+    color: white !important;
+    font-weight: bold;
 }
 .btn-red:hover {
-    background-color: darkred;
-    border-color: darkred;
+    background-color: #990000 !important; /* Vermelho mais escuro */
+    border-color: #990000 !important;
 }
 
 .btn-yellow {
-    background-color: var(--amarelo);
-    border-color: var(--amarelo);
-    color: var(--preto);
+    background-color: var(--amarelo) !important;
+    border-color: var(--amarelo) !important;
+    color: var(--preto) !important;
     font-weight: bold;
 }
 .btn-yellow:hover {
-    background-color: gold;
-    border-color: gold;
+    background-color: #E6B800 !important; /* Amarelo mais escuro */
+    border-color: #E6B800 !important;
 }
 
 .btn-outline-red {
-    color: var(--vermelho);
-    border-color: var(--vermelho);
+    color: var(--vermelho) !important;
+    border-color: var(--vermelho) !important;
 }
 .btn-outline-red:hover {
-    background-color: var(--vermelho);
-    color: white;
+    background-color: var(--vermelho) !important;
+    color: white !important;
 }
 
+.btn-whatsapp {
+    background-color: #25D366 !important;
+    border-color: #25D366 !important;
+    color: white !important;
+}
+.btn-whatsapp:hover {
+    background-color: #128C7E !important;
+    border-color: #128C7E !important;
+}
+
+/* ========== HERO SECTION ========== */
 .hero {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-color: var(--vermelho); /* Fundo sólido, impactante */
     color: white;
     padding: 80px 0;
     text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
+.hero h1 {
+    font-weight: 800;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+}
+
+/* ========== SEARCH BOX ========== */
 .search-box {
     max-width: 600px;
     margin: 30px auto;
 }
-.carousel-item img {
-    height: 250px;
-    object-fit: cover;
-    border-radius: 10px;
+
+/* ========== CARDS ========== */
+.card {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    border: none;
+    min-height: 360px;
 }
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+}
+
 .price {
-    color: #dc3545;
+    color: var(--vermelho) !important;
     font-weight: bold;
+    font-size: 1.2rem;
 }
+
+/* ========== MAPA ========== */
 #mapa-interativo {
     height: 500px;
     margin: 40px 0;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    position: relative;
 }
-.card {
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
-}
-.card:hover {
-    transform: translateY(-5px);
-}
-.navbar-brand span { font-weight: bold; }
-.text-red { color: #dc3545; }
-.text-yellow { color: #ffc107; }
-.btn-red { background-color: #dc3545; border-color: #dc3545; }
-.btn-yellow { background-color: #ffc107; border-color: #ffc107; }
+
+/* ========== ICON BOXES ========== */
 .icon-section .icon-box {
     text-align: center;
-    padding: 20px;
-    background-color: #f8f9fa;
-    border-radius: 10px;
+    padding: 25px;
+    background-color: var(--cinza-claro);
+    border-radius: 12px;
     border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+.icon-section .icon-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
 }
 .icon-section .icon-box i {
     font-size: 3rem;
-    color: #764ba2;
+    color: var(--vermelho); /* Ícones em vermelho oficial */
     margin-bottom: 15px;
 }
 
-/* Modal Galeria */
+/* ========== MODAL GALERIA ========== */
 .modal-body .img-gallery {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -107,83 +139,105 @@
     border-radius: 8px;
     cursor: pointer;
     transition: transform 0.2s;
+    border: 2px solid transparent;
 }
 .modal-body .img-gallery img:hover {
     transform: scale(1.05);
-}
-.modal-body .main-img-container {
-    text-align: center;
-    margin-bottom: 15px;
+    border-color: var(--amarelo);
 }
 .modal-body .main-img-container img {
     width: 100%;
     height: 300px;
     object-fit: cover;
     border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-/* Estilos para a nova seção de pagamento */
+/* ========== PAGAMENTO ========== */
 .payment-option {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 10px;
-    padding: 20px;
+    background: var(--cinza-claro);
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 25px;
     text-align: center;
-    transition: transform 0.3s ease;
+    transition: all 0.3s ease;
 }
 .payment-option:hover {
     transform: translateY(-5px);
+    border-color: var(--amarelo);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
 }
 .payment-option i {
     font-size: 3rem;
     margin-bottom: 15px;
-    color: #495057;
+    color: var(--cinza-texto);
 }
 .payment-option h5 {
     font-weight: bold;
+    color: var(--preto);
 }
 
-/* Tooltip do mapa */
+/* ========== TOOLTIP MAPA ========== */
 .seta-tooltip {
-    background: var(--vermelho);
-    color: white;
+    background: var(--vermelho) !important;
+    color: white !important;
     font-weight: bold;
-    padding: 5px 10px;
-    border-radius: 5px;
+    padding: 10px;
+    border-radius: 8px;
     font-size: 14px;
+    max-width: 280px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
-
-/* Sombra suave nos cards */
-.card {
-    transition: transform 0.3s, box-shadow 0.3s;
-    border: none;
-}
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-}
-
-/* Navbar */
-.navbar-brand {
+.seta-tooltip a {
+    color: #fff !important;
+    text-decoration: none;
     font-weight: bold;
+}
+.seta-tooltip a:hover {
+    text-decoration: underline;
+}
+
+/* ========== NAVBAR ========== */
+.navbar-brand span {
+    font-weight: 800;
     font-size: 1.5rem;
 }
+.navbar-brand .text-red { color: var(--vermelho) !important; }
+.navbar-brand .text-yellow { color: var(--amarelo) !important; }
 
-/* Responsivo */
+/* ========== FOOTER ========== */
+footer {
+    background-color: var(--preto) !important;
+    color: var(--amarelo) !important;
+    padding: 40px 0;
+}
+footer .text-white {
+    color: white !important;
+}
+footer a {
+    color: var(--amarelo) !important;
+    text-decoration: none;
+}
+footer a:hover {
+    text-decoration: underline;
+}
+
+/* ========== RESPONSIVO ========== */
 @media (max-width: 768px) {
     .navbar-brand {
         font-size: 1.3rem;
     }
     .btn-lg {
-        display: block;
-        width: 100%;
-        margin-bottom: 10px;
+        padding: 12px 20px;
+        font-size: 1rem;
     }
-}
-
-/* Footer */
-footer {
-    background-color: #000 !important; /* Preto puro */
-    color: #FFCC00;
-    padding: 2rem 0;
+    .hero {
+        padding: 60px 20px;
+    }
+    .card {
+        min-height: auto;
+    }
+    #mapa-interativo {
+        height: 350px;
+    }
 }
