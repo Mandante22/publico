@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         carouselInterval = setInterval(() => {
             currentCarouselIndex = (currentCarouselIndex + 1) % totalGroups;
             updateActiveGroup();
-        }, 5000); // Muda a cada 5 segundos
+        }, 6000); // Muda a cada 6 segundos
     }
 
     function updateActiveGroup() {
@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // =============== ABRIR MODAL DE GALERIA ===============
     window.abrirModalGaleria = async function(anuncioId) {
-        const { data: anuncio, error } = await supabaseClient
+        const {  anuncio, error } = await supabaseClient
             .from('anuncios')
             .select('*')
             .eq('id', anuncioId)
@@ -445,7 +445,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             if (comprovanteError) throw comprovanteError;
 
-            const { data: comprovanteUrlData } = supabaseClient.storage
+            const {  comprovanteUrlData } = supabaseClient.storage
                 .from('comprovantes')
                 .getPublicUrl(comprovantePath);
 
@@ -462,7 +462,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 if (fotoError) throw fotoError;
 
-                const { data: fotoUrlData } = supabaseClient.storage
+                const {  fotoUrlData } = supabaseClient.storage
                     .from('fotos')
                     .getPublicUrl(fotoPath);
 
