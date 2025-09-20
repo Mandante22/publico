@@ -6,10 +6,10 @@
     <meta name="description" content="Encontre ou anuncie casas em Angola sem intermediários. Rápido, seguro e 100% angolano.">
     <title>Intermediário Online - Encontre sua casa sem intermediários</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css  " rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css  ">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css  " integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js  " integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- REMOVIDO integrity para evitar erro -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="style.css">
 
     <style>
@@ -51,6 +51,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             transition: all 0.3s ease;
             min-height: 380px; /* Evita saltos no layout */
+            position: relative;
         }
         .card:hover {
             transform: translateY(-8px);
@@ -195,6 +196,33 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Estilo para o botão flutuante */
+        .btn-floating {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Estilo para badges */
+        .badge {
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
@@ -214,7 +242,6 @@
                     <li class="nav-item"><a class="nav-link text-black" href="#mapa">Ver Mapa</a></li>
                     <li class="nav-item"><a class="nav-link text-black" href="#contactos">Contactos</a></li>
                     <li class="nav-item"><a class="nav-link btn btn-red text-white ms-2" href="#anunciar">Anuncie Agora</a></li>
-                    <!-- REMOVIDO: <li class="nav-item"><a class="nav-link text-black" href="admin.html">Admin</a></li> -->
                 </ul>
             </div>
         </div>
@@ -226,11 +253,26 @@
             <p class="lead">Rápido, seguro e 100% angolano. Conectamos você diretamente com o dono da casa — sem taxas escondidas.</p>
             <div class="search-box">
                 <div class="input-group">
-                    <input type="text" id="searchBairro" class="form-control form-control-lg" placeholder="Digite o bairro (ex: Maianga, Talatona, Viana)">
+                    <input type="text" id="searchBairro" class="form-control form-control-lg" placeholder="Digite o bairro ou palavra-chave (ex: Maianga, piscina, estudantes)">
                     <button class="btn btn-danger btn-lg" onclick="buscarAnuncios()">Buscar</button>
                 </div>
             </div>
+            <div class="container mt-3">
+                <div class="btn-group" role="group" aria-label="Filtro por Preço">
+                    <button type="button" class="btn btn-outline-red" onclick="filtrarPorPreco('ate50')">Até 50.000 Kz</button>
+                    <button type="button" class="btn btn-outline-red" onclick="filtrarPorPreco('50a100')">50k–100k</button>
+                    <button type="button" class="btn btn-outline-red" onclick="filtrarPorPreco('acima100')">Acima de 100k</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="limparFiltroPreco()">Limpar</button>
+                </div>
+            </div>
             <a href="#anunciar" class="btn btn-outline-light btn-lg mt-3">Anuncie Sua Casa</a>
+        </div>
+    </section>
+
+    <!-- Contador de Anúncios -->
+    <section class="py-3 bg-white text-center">
+        <div class="container">
+            <h3 class="text-red fw-bold" id="contadorAnuncios">✅ Carregando número de imóveis...</h3>
         </div>
     </section>
 
@@ -435,7 +477,8 @@
         </div>
     </section>
 
-    <div class="modal fade" id="modalVerMaisFotos" tabindex="-1" aria-labelledby="modalVerMaisFotosLabel" aria-hidden="true">
+    <!-- Modal: aria-hidden corrigido -->
+    <div class="modal fade" id="modalVerMaisFotos" tabindex="-1" aria-labelledby="modalVerMaisFotosLabel" aria-hidden="false">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
@@ -455,6 +498,12 @@
                     <a id="modalWhatsapp" href="#" class="btn btn-whatsapp mt-3 w-100" target="_blank">
                         📞 Contactar pelo WhatsApp
                     </a>
+                    <a id="modalLigar" href="#" class="btn btn-outline-dark mt-2 w-100">
+                        <i class="fas fa-phone"></i> Ligar agora
+                    </a>
+                    <button class="btn btn-outline-secondary mt-2 w-100" onclick="compartilharAnuncioModal()">
+                        <i class="fas fa-share-alt"></i> Compartilhar
+                    </button>
                 </div>
             </div>
         </div>
@@ -498,11 +547,20 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js  "></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2  "></script>
-    <script src="script.js"></script>
+    <!-- Botão Flutuante de WhatsApp -->
+    <a href="https://wa.me/244931891432" class="btn-whatsapp btn-floating" target="_blank">
+        <i class="fab fa-whatsapp" style="font-size: 1.5rem;"></i>
+    </a>
 
+    <!-- Scripts: Ordem e versão corrigidas -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- ✅ CDN OFICIAL DO SUPABASE — COMPATÍVEL COM <script src> -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Leaflet sem integrity -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Script principal com defer -->
+    <script src="script.js" defer></script>
+    <!-- Tidio -->
     <script src="//code.tidio.co/3jutiom36gj9vn26apre8m0jjp53n6uz.js" async></script>
 </body>
 </html>
-
