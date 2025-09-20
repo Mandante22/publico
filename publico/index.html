@@ -10,33 +10,31 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <link rel="stylesheet" href="style.css">
-
     <style>
-        /* ========== PALETA DE CORES PROFISSIONAL ========== */
+        /* ========== CORES OFICIAIS ========== */
         :root {
-            --cor-primaria: #2c3e50;
-            --cor-secundaria: #e74c3c;
-            --cor-whatsapp: #25D366;
-            --cor-fundo-claro: #f8f9fa;
-            --cor-texto: #34495e;
-            --cor-hover: rgba(44, 62, 80, 0.1);
+            --vermelho: #CC0000;
+            --preto: #000000;
+            --amarelo: #FFCC00;
+            --cinza-claro: #f8f9fa;
+            --cinza-texto: #495057;
         }
 
         .hero {
-            background-color: var(--cor-primaria);
+            background-color: var(--vermelho);
             color: white;
             padding: 80px 0;
             text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
         }
         .search-box {
             max-width: 600px;
             margin: 30px auto;
         }
         .price {
-            color: var(--cor-secundaria);
+            color: var(--vermelho) !important;
             font-weight: bold;
+            font-size: 1.2rem;
         }
         #mapa-interativo {
             height: 500px;
@@ -50,128 +48,38 @@
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             transition: all 0.3s ease;
-            min-height: 380px; /* Evita saltos no layout */
+            min-height: 360px;
         }
         .card:hover {
             transform: translateY(-8px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
         }
-        .navbar-brand span { font-weight: bold; }
-        .text-red { color: var(--cor-secundaria); }
-        .btn-red { 
-            background-color: var(--cor-secundaria); 
-            border-color: var(--cor-secundaria); 
+        .btn-red {
+            background-color: var(--vermelho) !important;
+            border-color: var(--vermelho) !important;
+            color: white !important;
+            font-weight: bold;
         }
-        .btn-red:hover {
-            background-color: #c0392b;
-            border-color: #c0392b;
+        .btn-yellow {
+            background-color: var(--amarelo) !important;
+            border-color: var(--amarelo) !important;
+            color: var(--preto) !important;
+            font-weight: bold;
         }
         .btn-whatsapp {
-            background-color: var(--cor-whatsapp);
-            border-color: var(--cor-whatsapp);
-            color: white;
+            background-color: #25D366 !important;
+            border-color: #25D366 !important;
+            color: white !important;
         }
         .btn-whatsapp:hover {
-            background-color: #128C7E;
-            border-color: #128C7E;
+            background-color: #128C7E !important;
+            border-color: #128C7E !important;
         }
-        .icon-section .icon-box {
-            text-align: center;
-            padding: 20px;
-            background-color: var(--cor-fundo-claro);
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-            transition: all 0.3s ease;
-        }
-        .icon-section .icon-box:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 15px var(--cor-hover);
-        }
-        .icon-section .icon-box i {
-            font-size: 3rem;
-            color: var(--cor-primaria);
-            margin-bottom: 15px;
-        }
+        .text-red { color: var(--vermelho) !important; }
+        .text-yellow { color: var(--amarelo) !important; }
+        .text-black { color: var(--preto) !important; }
 
-        /* Modal Galeria */
-        .modal-body .img-gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 10px;
-        }
-        .modal-body .img-gallery img {
-            width: 100%;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .modal-body .img-gallery img:hover {
-            transform: scale(1.05);
-        }
-        .modal-body .main-img-container {
-            text-align: center;
-            margin-bottom: 15px;
-        }
-        .modal-body .main-img-container img {
-            width: 100%;
-            height: 300px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-
-        /* Estilos para pagamento */
-        .payment-option {
-            background: var(--cor-fundo-claro);
-            border: 1px solid #e9ecef;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        .payment-option:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 15px var(--cor-hover);
-        }
-        .payment-option i {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            color: var(--cor-texto);
-        }
-        .payment-option h5 {
-            font-weight: bold;
-        }
-
-        /* Spinner no mapa */
-        #mapa-interativo .spinner-border {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1000;
-        }
-
-        /* Tooltip do mapa */
-        .seta-tooltip {
-            background: var(--cor-secundaria);
-            color: white;
-            font-weight: bold;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 14px;
-            max-width: 250px;
-        }
-        .seta-tooltip a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .seta-tooltip a:hover {
-            text-decoration: underline;
-        }
-
-        /* ========== NOVO GRID CARROSSEL ========== */
+        /* ========== NOVO GRID CARROSSEL 2x2 ========== */
         #carouselDestaqueGrid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -214,7 +122,6 @@
                     <li class="nav-item"><a class="nav-link text-black" href="#mapa">Ver Mapa</a></li>
                     <li class="nav-item"><a class="nav-link text-black" href="#contactos">Contactos</a></li>
                     <li class="nav-item"><a class="nav-link btn btn-red text-white ms-2" href="#anunciar">Anuncie Agora</a></li>
-                    <!-- REMOVIDO: <li class="nav-item"><a class="nav-link text-black" href="admin.html">Admin</a></li> -->
                 </ul>
             </div>
         </div>
@@ -498,3 +405,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
