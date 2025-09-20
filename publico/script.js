@@ -115,10 +115,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                                 <p class="card-text">${anuncio.descricao.substring(0, 100)}...</p>
                                 <p class="text-red fw-bold">${anuncio.preco.toLocaleString('pt-AO')} Kz/mês</p>
                                 <p class="text-muted">📍 ${anuncio.localizacao}</p>
-                                <button class="btn btn-outline-red w-100 mb-2 abrir-chat" data-dono="Proprietário" data-whatsapp="${anuncio.contacto}">
+                                <button class="btn btn-outline-danger w-100 mb-2 abrir-chat" data-dono="Proprietário" data-whatsapp="${anuncio.contacto}">
                                     💬 Contactar
                                 </button>
-                                <a href="https://wa.me/${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-yellow w-100 text-black" target="_blank">
+                                <a href="https://wa.me/${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-whatsapp w-100" target="_blank">
                                     📱 WhatsApp
                                 </a>
                             </div>
@@ -143,71 +143,94 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
-    // =============== CARROSSEL DE DESTAQUE ===============
-    async function carregarCarrossel() {
-        const carouselInner = document.getElementById('carouselInner');
-        if (!carouselInner) return;
+    // =============== NOVO CARROSSEL EM GRID 2x2 ===============
+    let currentCarouselIndex = 0;
+    let carouselInterval;
+
+    async function carregarCarrosselGrid() {
+        const carouselContainer = document.getElementById('carouselDestaqueGrid');
+        if (!carouselContainer) return;
 
         try {
             const data = await getAnuncios();
-
-            let html = '';
-            let items = [];
+            if (!data || data.length === 0) {
+                carouselContainer.innerHTML = '<p class="text-center text-muted">Nenhum anúncio disponível no momento.</p>';
+                return;
+            }
 
             // Agrupa os anúncios em grupos de 4
-            for (let i = 0; i < (data?.length || 0); i += 4) {
-                items.push(data.slice(i, i + 4));
+            const groups = [];
+            for (let i = 0; i < data.length; i += 4) {
+                groups.push(data.slice(i, i + 4));
             }
 
-            items.forEach((grupo, index) => {
-                const activeClass = index === 0 ? 'active' : '';
-                html += `<div class="carousel-item ${activeClass}">`;
+            // Limpa container
+            carouselContainer.innerHTML = '';
 
-                // Grid 2x2
-                html += `
-                    <div class="row g-3">
-                        ${grupo.map(anuncio => `
-                            <div class="col-md-6 col-lg-6">
-                                <div class="card h-100 shadow-sm">
-                                    <img src="${anuncio.fotoPrincipal || anuncio.comprovante || 'https://via.placeholder.com/400x200?text=Sem+Foto'}" 
-                                        alt="${anuncio.titulo}" 
-                                        class="card-img-top" 
-                                        style="height: 200px; object-fit: cover;" 
-                                        loading="lazy"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#modalVerMaisFotos"
-                                        onclick="abrirModalGaleria('${anuncio.id}')">
-                                    <div class="card-body">
-                                        <h5 class="card-title">${anuncio.titulo}</h5>
-                                        <p class="card-text">${anuncio.localizacao}</p>
-                                        <p class="text-red fw-bold">${anuncio.preco.toLocaleString('pt-AO')} Kz/mês</p>
-                                        <a href="https://wa.me/${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-yellow w-100 text-black" target="_blank">
-                                            📱 WhatsApp
-                                        </a>
-                                    </div>
-                                </div>
+            // Cria cada grupo como um "slide"
+            groups.forEach((group, index) => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = `carousel-item-grid ${index === 0 ? 'active' : ''}`;
+                groupDiv.style.display = 'grid';
+                groupDiv.style.gridTemplateColumns = window.innerWidth <= 768 ? '1fr' : 'repeat(2, 1fr)';
+                groupDiv.style.gap = '20px';
+
+                group.forEach(anuncio => {
+                    const fotos = anuncio.fotos ? JSON.parse(anuncio.fotos) : [];
+                    const fotoPrincipal = fotos[0] || anuncio.comprovante || 'https://via.placeholder.com/400x200?text=Sem+Foto';
+
+                    const cardHtml = `
+                        <div class="card h-100">
+                            <img src="${fotoPrincipal}" 
+                                 alt="${anuncio.titulo}" 
+                                 class="card-img-top" 
+                                 style="height: 200px; object-fit: cover;"
+                                 loading="lazy"
+                                 data-bs-toggle="modal"
+                                 data-bs-target="#modalVerMaisFotos"
+                                 onclick="abrirModalGaleria('${anuncio.id}')">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">${anuncio.titulo}</h5>
+                                <p class="card-text flex-grow-1">${anuncio.localizacao}</p>
+                                <p class="text-red fw-bold">${anuncio.preco.toLocaleString('pt-AO')} Kz/mês</p>
+                                <a href="https://wa.me/${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-whatsapp w-100" target="_blank">
+                                    📱 WhatsApp
+                                </a>
                             </div>
-                        `).join('')}
-                    </div>
-                `;
-                html += `</div>`;
+                        </div>
+                    `;
+                    groupDiv.innerHTML += cardHtml;
+                });
+
+                carouselContainer.appendChild(groupDiv);
             });
 
-            carouselInner.innerHTML = html;
-            console.log('✅ Carrossel carregado com sucesso.');
-
-            // Inicializa o carrossel
-            const carouselElement = document.getElementById('carouselDestaque');
-            if (carouselElement) {
-                new bootstrap.Carousel(carouselElement, {
-                    interval: 5000,
-                    ride: 'carousel'
-                });
+            // Inicia rotação automática se tiver mais de 1 grupo
+            if (groups.length > 1) {
+                startAutoRotate(groups.length);
             }
+
+            console.log('✅ Carrossel em grid carregado com sucesso.');
+
         } catch (error) {
-            console.error('❌ Erro ao carregar carrossel:', error);
+            console.error('❌ Erro ao carregar carrossel em grid:', error);
             alert('Erro ao carregar destaques. Tente recarregar a página.');
         }
+    }
+
+    function startAutoRotate(totalGroups) {
+        clearInterval(carouselInterval);
+        carouselInterval = setInterval(() => {
+            currentCarouselIndex = (currentCarouselIndex + 1) % totalGroups;
+            updateActiveGroup();
+        }, 5000); // Muda a cada 5 segundos
+    }
+
+    function updateActiveGroup() {
+        const items = document.querySelectorAll('.carousel-item-grid');
+        items.forEach((item, index) => {
+            item.classList.toggle('active', index === currentCarouselIndex);
+        });
     }
 
     // =============== MAPA INTERATIVO ===============
@@ -245,13 +268,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             for (const anuncio of data) {
                 let coords = null;
 
-                // Verifica se já tem coordenadas salvas
                 if (anuncio.latitude && anuncio.longitude) {
                     coords = { lat: anuncio.latitude, lng: anuncio.longitude };
                 } else {
                     coords = await getCoordinates(anuncio.localizacao);
                     if (coords) {
-                        // Salva as coordenadas no banco
                         await supabaseClient
                             .from('anuncios')
                             .update({
@@ -277,7 +298,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
             }
 
-            // Esconder spinner
             loadingDiv.remove();
             console.log('✅ Marcadores do mapa carregados com sucesso.');
 
@@ -336,7 +356,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // =============== ABRIR MODAL DE GALERIA ===============
     window.abrirModalGaleria = async function(anuncioId) {
-        const {  anuncio, error } = await supabaseClient
+        const { data: anuncio, error } = await supabaseClient
             .from('anuncios')
             .select('*')
             .eq('id', anuncioId)
@@ -371,7 +391,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
         }
 
-        // Adiciona a foto principal à galeria, se não estiver incluída
         if (!fotos.includes(anuncio.fotoPrincipal)) {
             const img = document.createElement('img');
             img.src = anuncio.fotoPrincipal;
@@ -412,7 +431,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             if (fotoPrincipalError) throw fotoPrincipalError;
 
-            const {  fotoPrincipalUrlData } = await supabaseClient.storage
+            const { data: fotoPrincipalUrlData } = supabaseClient.storage
                 .from('fotos')
                 .getPublicUrl(fotoPrincipalPath);
 
@@ -426,7 +445,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             if (comprovanteError) throw comprovanteError;
 
-            const {  comprovanteUrlData } = await supabaseClient.storage
+            const { data: comprovanteUrlData } = supabaseClient.storage
                 .from('comprovantes')
                 .getPublicUrl(comprovantePath);
 
@@ -443,14 +462,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 if (fotoError) throw fotoError;
 
-                // ✅ CORREÇÃO: Adicione "await" e verifique se fotoUrlData existe
-                const { data: fotoUrlData } = await supabaseClient.storage
+                const { data: fotoUrlData } = supabaseClient.storage
                     .from('fotos')
                     .getPublicUrl(fotoPath);
-
-                if (!fotoUrlData || !fotoUrlData.publicUrl) {
-                    throw new Error("Erro ao obter URL da foto.");
-                }
 
                 fotosUrls.push(fotoUrlData.publicUrl);
             }
@@ -474,7 +488,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             if (dbError) throw dbError;
 
-            alert('🎉 Anúncio enviado com sucesso! Seu anúncio será revisado em até 24h.');
+            alert('🎉 Anúncio enviado com sucesso! Seu anúncio será revisado em até 1h.');
             this.reset();
         } catch (error) {
             console.error("Erro ao salvar:", error);
@@ -486,6 +500,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
     // Chamadas iniciais
-    await carregarCarrossel();
+    await carregarCarrosselGrid(); // <<< CHAMADA DO NOVO CARROSSEL
     await carregarImoveisNoMapa();
+
 });
