@@ -419,25 +419,31 @@ async function carregarCarrossel() {
                 .from('comprovantes')
                 .getPublicUrl(comprovantePath);
 
-            // Upload das fotos adicionais
-            let fotosUrls = [];
+ // Upload das fotos adicionais
+let fotosUrls = [];
 
-            for (const file of fotosAdicionaisFiles) {
-                const safeFileName = sanitizeFileName(file.name);
-                const fotoPath = `public/${Date.now()}_${safeFileName}`;
+for (const file of fotosAdicionaisFiles) {
+    const safeFileName = sanitizeFileName(file.name);
+    const fotoPath = `public/${Date.now()}_${safeFileName}`;
 
-                const { error: fotoError } = await supabaseClient.storage
-                    .from('fotos')
-                    .upload(fotoPath, file);
+    const { error: fotoError } = await supabaseClient.storage
+        .from('fotos')
+        .upload(fotoPath, file);
 
-                if (fotoError) throw fotoError;
+    if (fotoError) throw fotoError;
 
-                const {  fotoUrlData } = supabaseClient.storage
-                    .from('fotos')
-                    .getPublicUrl(fotoPath);
+    // ✅ CORREÇÃO 1: Adicione "await"
+    const { data: fotoUrlData } = await supabaseClient.storage
+        .from('fotos')
+        .getPublicUrl(fotoPath);
 
-                fotosUrls.push(fotoUrlData.publicUrl);
-            }
+    // ✅ CORREÇÃO 2: Verifique se fotoUrlData existe
+    if (!fotoUrlData || !fotoUrlData.publicUrl) {
+        throw new Error("Erro ao obter URL da foto.");
+    }
+
+    fotosUrls.push(fotoUrlData.publicUrl);
+}
 
             // Salva no banco
             const { error: dbError } = await supabaseClient
@@ -553,4 +559,5 @@ async function carregarCarrossel() {
         alert('Erro ao carregar destaques. Tente recarregar a página.');
     }
 }
+
 
