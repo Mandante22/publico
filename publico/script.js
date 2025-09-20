@@ -446,11 +446,18 @@ document.addEventListener('DOMContentLoaded', async function() {
                 .from('fotos')
                 .upload(fotoPrincipalPath, fotoPrincipalFile);
 
-            if (fotoPrincipalError) throw fotoPrincipalError;
+            if (fotoPrincipalError) {
+                throw new Error("Erro ao fazer upload da foto principal.");
+            }
 
-            const { data: fotoPrincipalUrlData } = supabaseClient.storage
+            // Após o upload bem-sucedido, obtenha a URL pública
+            const { data: fotoPrincipalUrlData } = await supabaseClient.storage
                 .from('fotos')
                 .getPublicUrl(fotoPrincipalPath);
+
+            if (!fotoPrincipalUrlData || !fotoPrincipalUrlData.publicUrl) {
+                throw new Error("Erro ao obter URL da foto principal.");
+            }
 
             // Upload do comprovante
             const safeComprovanteName = sanitizeFileName(comprovanteFile.name);
@@ -460,11 +467,17 @@ document.addEventListener('DOMContentLoaded', async function() {
                 .from('comprovantes')
                 .upload(comprovantePath, comprovanteFile);
 
-            if (comprovanteError) throw comprovanteError;
+            if (comprovanteError) {
+                throw new Error("Erro ao fazer upload do comprovante.");
+            }
 
-            const {  comprovanteUrlData } = supabaseClient.storage
+            const { data: comprovanteUrlData } = await supabaseClient.storage
                 .from('comprovantes')
                 .getPublicUrl(comprovantePath);
+
+            if (!comprovanteUrlData || !comprovanteUrlData.publicUrl) {
+                throw new Error("Erro ao obter URL do comprovante.");
+            }
 
             // Upload das fotos adicionais
             let fotosUrls = [];
@@ -477,11 +490,17 @@ document.addEventListener('DOMContentLoaded', async function() {
                     .from('fotos')
                     .upload(fotoPath, file);
 
-                if (fotoError) throw fotoError;
+                if (fotoError) {
+                    throw new Error("Erro ao fazer upload de uma foto adicional.");
+                }
 
-                const {  fotoUrlData } = supabaseClient.storage
+                const { data: fotoUrlData } = await supabaseClient.storage
                     .from('fotos')
                     .getPublicUrl(fotoPath);
+
+                if (!fotoUrlData || !fotoUrlData.publicUrl) {
+                    throw new Error("Erro ao obter URL de uma foto adicional.");
+                }
 
                 fotosUrls.push(fotoUrlData.publicUrl);
             }
@@ -509,7 +528,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             this.reset();
         } catch (error) {
             console.error("Erro ao salvar:", error);
-            alert("Erro ao salvar. Tente novamente.");
+            alert("Erro ao salvar. Tente novamente. Detalhe: " + error.message);
         } finally {
             btnSubmit.disabled = false;
             btnSubmit.innerHTML = 'Enviar Anúncio';
