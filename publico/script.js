@@ -143,62 +143,73 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
-async function carregarCarrossel() {
-    const carouselInner = document.getElementById('carouselInner');
-    if (!carouselInner) return;
+    // =============== CARROSSEL DE DESTAQUE ===============
+    async function carregarCarrossel() {
+        const carouselInner = document.getElementById('carouselInner');
+        if (!carouselInner) return;
 
-    try {
-        const data = await getAnuncios();
+        try {
+            const data = await getAnuncios();
 
-        let html = '';
-        let items = [];
+            let html = '';
+            let items = [];
 
-        // Agrupa os anúncios em grupos de 4
-        for (let i = 0; i < (data?.length || 0); i += 4) {
-            items.push(data.slice(i, i + 4));
-        }
+            // Agrupa os anúncios em grupos de 4
+            for (let i = 0; i < (data?.length || 0); i += 4) {
+                items.push(data.slice(i, i + 4));
+            }
 
-        items.forEach((grupo, index) => {
-            const activeClass = index === 0 ? 'active' : '';
-            html += `<div class="carousel-item ${activeClass}">`;
+            items.forEach((grupo, index) => {
+                const activeClass = index === 0 ? 'active' : '';
+                html += `<div class="carousel-item ${activeClass}">`;
 
-            // Grid 2x2
-            html += `
-                <div class="row g-3">
-                    ${grupo.map(anuncio => `
-                        <div class="col-md-6 col-lg-6">
-                            <div class="card h-100 shadow-sm">
-                                <img src="${anuncio.fotoPrincipal || anuncio.comprovante || 'https://via.placeholder.com/400x200?text=Sem+Foto'}" 
-                                    alt="${anuncio.titulo}" 
-                                    class="card-img-top" 
-                                    style="height: 200px; object-fit: cover;" 
-                                    loading="lazy"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#modalVerMaisFotos"
-                                    onclick="abrirModalGaleria('${anuncio.id}')">
-                                <div class="card-body">
-                                    <h5 class="card-title">${anuncio.titulo}</h5>
-                                    <p class="card-text">${anuncio.localizacao}</p>
-                                    <p class="text-red fw-bold">${anuncio.preco.toLocaleString('pt-AO')} Kz/mês</p>
-                                    <a href="https://wa.me/${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-yellow w-100 text-black" target="_blank">
-                                        📱 WhatsApp
-                                    </a>
+                // Grid 2x2
+                html += `
+                    <div class="row g-3">
+                        ${grupo.map(anuncio => `
+                            <div class="col-md-6 col-lg-6">
+                                <div class="card h-100 shadow-sm">
+                                    <img src="${anuncio.fotoPrincipal || anuncio.comprovante || 'https://via.placeholder.com/400x200?text=Sem+Foto'}" 
+                                        alt="${anuncio.titulo}" 
+                                        class="card-img-top" 
+                                        style="height: 200px; object-fit: cover;" 
+                                        loading="lazy"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalVerMaisFotos"
+                                        onclick="abrirModalGaleria('${anuncio.id}')">
+                                    <div class="card-body">
+                                        <h5 class="card-title">${anuncio.titulo}</h5>
+                                        <p class="card-text">${anuncio.localizacao}</p>
+                                        <p class="text-red fw-bold">${anuncio.preco.toLocaleString('pt-AO')} Kz/mês</p>
+                                        <a href="https://wa.me/${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-yellow w-100 text-black" target="_blank">
+                                            📱 WhatsApp
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            html += `</div>`;
-        });
+                        `).join('')}
+                    </div>
+                `;
+                html += `</div>`;
+            });
 
-        carouselInner.innerHTML = html;
-        console.log('✅ Carrossel carregado com sucesso.');
-    } catch (error) {
-        console.error('❌ Erro ao carregar carrossel:', error);
-        alert('Erro ao carregar destaques. Tente recarregar a página.');
+            carouselInner.innerHTML = html;
+            console.log('✅ Carrossel carregado com sucesso.');
+
+            // Inicializa o carrossel
+            const carouselElement = document.getElementById('carouselDestaque');
+            if (carouselElement) {
+                new bootstrap.Carousel(carouselElement, {
+                    interval: 5000,
+                    ride: 'carousel'
+                });
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar carrossel:', error);
+            alert('Erro ao carregar destaques. Tente recarregar a página.');
+        }
     }
-}
+
     // =============== MAPA INTERATIVO ===============
     async function carregarImoveisNoMapa() {
         try {
@@ -325,7 +336,7 @@ async function carregarCarrossel() {
 
     // =============== ABRIR MODAL DE GALERIA ===============
     window.abrirModalGaleria = async function(anuncioId) {
-        const { data: anuncio, error } = await supabaseClient
+        const {  anuncio, error } = await supabaseClient
             .from('anuncios')
             .select('*')
             .eq('id', anuncioId)
@@ -401,7 +412,7 @@ async function carregarCarrossel() {
 
             if (fotoPrincipalError) throw fotoPrincipalError;
 
-            const { data: fotoPrincipalUrlData } = supabaseClient.storage
+            const {  fotoPrincipalUrlData } = await supabaseClient.storage
                 .from('fotos')
                 .getPublicUrl(fotoPrincipalPath);
 
@@ -415,35 +426,34 @@ async function carregarCarrossel() {
 
             if (comprovanteError) throw comprovanteError;
 
-            const {  comprovanteUrlData } = supabaseClient.storage
+            const {  comprovanteUrlData } = await supabaseClient.storage
                 .from('comprovantes')
                 .getPublicUrl(comprovantePath);
 
- // Upload das fotos adicionais
-let fotosUrls = [];
+            // Upload das fotos adicionais
+            let fotosUrls = [];
 
-for (const file of fotosAdicionaisFiles) {
-    const safeFileName = sanitizeFileName(file.name);
-    const fotoPath = `public/${Date.now()}_${safeFileName}`;
+            for (const file of fotosAdicionaisFiles) {
+                const safeFileName = sanitizeFileName(file.name);
+                const fotoPath = `public/${Date.now()}_${safeFileName}`;
 
-    const { error: fotoError } = await supabaseClient.storage
-        .from('fotos')
-        .upload(fotoPath, file);
+                const { error: fotoError } = await supabaseClient.storage
+                    .from('fotos')
+                    .upload(fotoPath, file);
 
-    if (fotoError) throw fotoError;
+                if (fotoError) throw fotoError;
 
-    // ✅ CORREÇÃO 1: Adicione "await"
-    const { data: fotoUrlData } = await supabaseClient.storage
-        .from('fotos')
-        .getPublicUrl(fotoPath);
+                // ✅ CORREÇÃO: Adicione "await" e verifique se fotoUrlData existe
+                const { data: fotoUrlData } = await supabaseClient.storage
+                    .from('fotos')
+                    .getPublicUrl(fotoPath);
 
-    // ✅ CORREÇÃO 2: Verifique se fotoUrlData existe
-    if (!fotoUrlData || !fotoUrlData.publicUrl) {
-        throw new Error("Erro ao obter URL da foto.");
-    }
+                if (!fotoUrlData || !fotoUrlData.publicUrl) {
+                    throw new Error("Erro ao obter URL da foto.");
+                }
 
-    fotosUrls.push(fotoUrlData.publicUrl);
-}
+                fotosUrls.push(fotoUrlData.publicUrl);
+            }
 
             // Salva no banco
             const { error: dbError } = await supabaseClient
@@ -479,85 +489,3 @@ for (const file of fotosAdicionaisFiles) {
     await carregarCarrossel();
     await carregarImoveisNoMapa();
 });
-// Inicializa o carrossel manualmente
-function inicializarCarrossel() {
-    const carouselElement = document.getElementById('carouselDestaque');
-    if (carouselElement) {
-        const carousel = new bootstrap.Carousel(carouselElement, {
-            interval: 5000, // 5 segundos
-            ride: 'carousel'
-        });
-
-        // Adiciona evento para as setas
-        document.querySelectorAll('[data-bs-target="#carouselDestaque"]').forEach(button => {
-            button.addEventListener('click', function() {
-                setTimeout(() => {
-                    const activeItem = document.querySelector('.carousel-item.active');
-                    if (activeItem) {
-                        activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }
-                }, 100);
-            });
-        });
-    }
-}
-
-// Chama após carregar o carrossel
-async function carregarCarrossel() {
-    const carouselInner = document.getElementById('carouselInner');
-    if (!carouselInner) return;
-
-    try {
-        const data = await getAnuncios();
-
-        let html = '';
-        let items = [];
-
-        // 1 anúncio por slide
-        for (let i = 0; i < (data?.length || 0); i += 1) {
-            items.push(data.slice(i, i + 1));
-        }
-
-        items.forEach((grupo, index) => {
-            const activeClass = index === 0 ? 'active' : '';
-            html += `<div class="carousel-item ${activeClass}"><div class="container">`;
-
-            grupo.forEach(anuncio => {
-                const fotos = anuncio.fotos ? JSON.parse(anuncio.fotos) : [];
-                const fotoPrincipal = fotos[0] || anuncio.comprovante || 'https://via.placeholder.com/400x200?text=Sem+Foto';
-
-                html += `
-                    <div class="card">
-                        <img src="${fotoPrincipal}" 
-                                alt="${anuncio.titulo}" 
-                                class="card-img-top" 
-                                style="height: 250px; object-fit: cover;" 
-                                loading="lazy"
-                                data-bs-toggle="modal"
-                                data-bs-target="#modalVerMaisFotos"
-                                onclick="abrirModalGaleria('${anuncio.id}')">
-                        <div class="card-body">
-                            <h5 class="card-title">${anuncio.titulo}</h5>
-                            <p class="card-text">${anuncio.localizacao}</p>
-                            <p class="text-red fw-bold">${anuncio.preco.toLocaleString('pt-AO')} Kz/mês</p>
-                            <a href="https://wa.me/${anuncio.contacto.replace(/\D/g, '')}" class="btn btn-yellow w-100 text-black" target="_blank">
-                                📱 WhatsApp
-                            </a>
-                        </div>
-                    </div>
-                `;
-            });
-            html += `</div></div>`;
-        });
-        carouselInner.innerHTML = html;
-        console.log('✅ Carrossel carregado com sucesso.');
-
-        // Inicializa o carrossel
-        inicializarCarrossel();
-    } catch (error) {
-        console.error('❌ Erro ao carregar carrossel:', error);
-        alert('Erro ao carregar destaques. Tente recarregar a página.');
-    }
-}
-
-
