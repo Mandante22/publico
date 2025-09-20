@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
-    // =============== NOVO CARROSSEL EM GRID 2x2 ===============
+    // =============== NOVO CARROSSEL EM GRID 2x2 COM PLACEHOLDERS ===============
     let currentCarouselIndex = 0;
     let carouselInterval;
 
@@ -175,6 +175,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 groupDiv.style.gridTemplateColumns = window.innerWidth <= 768 ? '1fr' : 'repeat(2, 1fr)';
                 groupDiv.style.gap = '20px';
 
+                // Adiciona os cards reais
                 group.forEach(anuncio => {
                     const fotos = anuncio.fotos ? JSON.parse(anuncio.fotos) : [];
                     const fotoPrincipal = fotos[0] || anuncio.comprovante || 'https://via.placeholder.com/400x200?text=Sem+Foto';
@@ -201,6 +202,22 @@ document.addEventListener('DOMContentLoaded', async function() {
                     `;
                     groupDiv.innerHTML += cardHtml;
                 });
+
+                // PREENCHE ESPAÇOS VAZIOS se o grupo tiver menos de 4 itens
+                const cardsFaltando = 4 - group.length;
+                if (cardsFaltando > 0) {
+                    for (let i = 0; i < cardsFaltando; i++) {
+                        const placeholderCard = `
+                            <div class="card h-100 placeholder-card d-flex align-items-center justify-content-center">
+                                <div class="text-center p-3">
+                                    <i class="fas fa-home fa-3x mb-3 opacity-50"></i>
+                                    <p class="mb-0">Mais anúncios em breve</p>
+                                </div>
+                            </div>
+                        `;
+                        groupDiv.innerHTML += placeholderCard;
+                    }
+                }
 
                 carouselContainer.appendChild(groupDiv);
             });
